@@ -130,8 +130,8 @@ export const MUSIC_TOGGLE_MODE_LIST = [
 
 export const DEFAULT_SETTING = {
   leaderboard: {
-    source: 'kw' as LX.OnlineSource,
-    boardId: 'kw__16',
+    source: 'kg' as LX.OnlineSource,
+    boardId: 'kg__8888',
   },
 
   songList: {

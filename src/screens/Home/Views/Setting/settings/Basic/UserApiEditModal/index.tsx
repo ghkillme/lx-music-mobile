@@ -8,6 +8,7 @@ import Dialog, { type DialogType } from '@/components/common/Dialog'
 import Button from '@/components/common/Button'
 import List from './List'
 import ImportBtn from './ImportBtn'
+import SyncSourcesModal, { type SyncSourcesModalType } from './SyncSourcesModal'
 
 // interface UrlInputType {
 //   setText: (text: string) => void
@@ -63,6 +64,7 @@ export interface UserApiEditModalType {
 
 export default forwardRef<UserApiEditModalType, {}>((props, ref) => {
   const dialogRef = useRef<DialogType>(null)
+  const syncSourcesModalRef = useRef<SyncSourcesModalType>(null)
   // const sourceSelectorRef = useRef<SourceSelectorType>(null)
   // const inputRef = useRef<UrlInputType>(null)
   const [visible, setVisible] = useState(false)
@@ -123,8 +125,15 @@ export default forwardRef<UserApiEditModalType, {}>((props, ref) => {
               <Button style={{ ...styles.btn, backgroundColor: theme['c-button-background'] }} onPress={handleCancel}>
                 <Text size={14} color={theme['c-button-font']}>{t('close')}</Text>
               </Button>
+              <Button
+                style={{ ...styles.btn, backgroundColor: theme['c-primary-font-active'] }}
+                onPress={() => syncSourcesModalRef.current?.show()}
+              >
+                <Text size={14} color="#fff">同步源库</Text>
+              </Button>
               <ImportBtn btnStyle={{ ...styles.btn, backgroundColor: theme['c-button-background'] }} />
             </View>
+            <SyncSourcesModal ref={syncSourcesModalRef} />
           </Dialog>
         ) : null
   )

@@ -70,7 +70,7 @@ const Header = () => {
   )
 }
 
-type IdType = InitState['navActiveId'] | 'nav_exit' | 'back_home'
+type IdType = InitState['navActiveId'] | 'nav_exit' | 'back_home' | 'nav_kg_top'
 
 const MenuItem = ({ id, icon, onPress }: {
   id: IdType
@@ -116,6 +116,13 @@ export default memo(() => {
       case 'back_home':
         backHome()
         return
+      case 'nav_kg_top':
+        global.app_event.changeMenuVisible(false)
+        setNavActiveId('nav_top')
+        setTimeout(() => {
+          global.app_event.emit('switchToKgLeaderboard')
+        }, 100)
+        return
     }
 
     global.app_event.changeMenuVisible(false)
@@ -129,6 +136,14 @@ export default memo(() => {
       <ScrollView style={styles.menus}>
         <View style={styles.list}>
           {NAV_MENUS.map(menu => <MenuItem key={menu.id} id={menu.id} icon={menu.icon} onPress={handlePress} />)}
+          <TouchableOpacity style={styles.menuItem} onPress={() => handlePress('nav_kg_top')}>
+            <View style={styles.iconContent}>
+              <Icon name="leaderboard" size={20} color={theme['c-primary-font-active']} />
+            </View>
+            <Text style={{ ...styles.text, fontWeight: 'bold' }} color={theme['c-primary-font-active']}>
+              酷狗榜单
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 

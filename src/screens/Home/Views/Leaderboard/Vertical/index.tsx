@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { createStyle } from '@/utils/tools'
 
@@ -6,6 +6,7 @@ import MusicList, { type MusicListType } from '../MusicList'
 import { getLeaderboardSetting, saveLeaderboardSetting } from '@/utils/data'
 import DrawerLayoutFixed, { type DrawerLayoutFixedType } from '@/components/common/DrawerLayoutFixed'
 import HeaderBar, { type HeaderBarType, type HeaderBarProps } from './HeaderBar'
+import QuickKgBar from './QuickKgBar'
 import { scaleSizeW } from '@/utils/pixelRatio'
 import { useTheme } from '@/store/theme/hook'
 // import { BorderWidths } from '@/theme'
@@ -28,15 +29,34 @@ export default () => {
   const isUnmountedRef = useRef(false)
   const boardsListRef = useRef<BoardsListType>(null)
   const headerBarRef = useRef<HeaderBarType>(null)
-  const boundInfo = useRef<{ source: LX.OnlineSource, id: string | null }>({ source: 'kw', id: null })
+  const boundInfo = useRef<{ source: LX.OnlineSource, id: string | null }>({ source: 'kg', id: 'kg__8888' })
+  const [currentBoardId, setCurrentBoardId] = useState<string | null>('kg__8888')
+  const [currentSource, setCurrentSource] = useState<LX.OnlineSource>('kg')
   // const [width, setWidth] = useState(0)
 
   const handleBoundChange = (source: LX.OnlineSource, id: string) => {
+    setCurrentSource(source)
+    setCurrentBoardId(id)
     musicListRef.current?.loadList(source, id)
     void saveLeaderboardSetting({
       source,
       boardId: id,
     })
+  }
+
+  const handleSelectKgBoard = (boardId: string) => {
+    boundInfo.current.source = 'kg'
+    boundInfo.current.id = boardId
+    setCurrentSource('kg')
+    setCurrentBoardId(boardId)
+    void getBoardsList('kg').then(list => {
+      requestAnimationFrame(() => {
+        const bound = list.find(l => l.id == boardId)
+        boardsListRef.current?.setList(list, boardId)
+        headerBarRef.current?.setBound('kg', boardId, bound?.name ?? 'Unknown')
+      })
+    })
+    handleBoundChange('kg', boardId)
   }
   const onBoundChange: BoardsListProps['onBoundChange'] = (id) => {
     boundInfo.current.id = id
@@ -100,20 +120,30 @@ export default () => {
     global.state_event.on('navActiveIdUpdated', handleFixDrawer)
 
 
+    const handleSwitchToKg = () => {
+      handleSelectKgBoard('kg__8888')
+    }
+    global.app_event.on('switchToKgLeaderboard' as any, handleSwitchToKg)
+
     isUnmountedRef.current = false
     void getLeaderboardSetting().then(({ source, boardId }) => {
-      boundInfo.current.source = source
-      boundInfo.current.id = boardId
-      void getBoardsList(source).then(list => {
-        const bound = list.find(l => l.id == boardId)
-        boardsListRef.current?.setList(list, boardId)
-        headerBarRef.current?.setBound(source, boardId, bound?.name ?? 'Unknown')
+      const activeSource = source || 'kg'
+      const activeBoardId = boardId || 'kg__8888'
+      boundInfo.current.source = activeSource
+      boundInfo.current.id = activeBoardId
+      setCurrentSource(activeSource)
+      setCurrentBoardId(activeBoardId)
+      void getBoardsList(activeSource).then(list => {
+        const bound = list.find(l => l.id == activeBoardId)
+        boardsListRef.current?.setList(list, activeBoardId)
+        headerBarRef.current?.setBound(activeSource, activeBoardId, bound?.name ?? 'Unknown')
       })
-      musicListRef.current?.loadList(source, boardId)
+      musicListRef.current?.loadList(activeSource, activeBoardId)
     })
 
     return () => {
       global.state_event.off('navActiveIdUpdated', handleFixDrawer)
+      global.app_event.off('switchToKgLeaderboard' as any, handleSwitchToKg)
       isUnmountedRef.current = true
     }
   }, [])
@@ -133,6 +163,11 @@ export default () => {
     >
       <View style={styles.container}>
         <HeaderBar ref={headerBarRef} onShowBound={onShowBound} onSourceChange={onSourceChange} />
+        <QuickKgBar
+          currentBoardId={currentBoardId}
+          currentSource={currentSource}
+          onSelectBoard={handleSelectKgBoard}
+        />
         <MusicList ref={musicListRef} />
       </View>
     </DrawerLayoutFixed>
